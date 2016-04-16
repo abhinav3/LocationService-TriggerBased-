@@ -4,8 +4,13 @@ import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.location.Location;
 import android.os.Bundle;
+import android.os.CountDownTimer;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
@@ -26,7 +31,7 @@ import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 
 public class MainActivity extends AppCompatActivity implements
-        GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener , LocationListener {
+        GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener , LocationListener ,SensorEventListener{
 
 
     protected static final String TAG = "LocationServices";
@@ -34,9 +39,15 @@ public class MainActivity extends AppCompatActivity implements
     protected Location mLastLocation;
     protected TextView mLatitudeText;
     protected TextView mLongitudeText;
-    protected Button requestUpdatesButton;
-    protected Button removeUpdatesButton;
     private LocationRequest mLocationRequest;
+    private SensorManager sensorManager;
+    private float accelerationThreshold = 2;
+    private long lastUpdate;
+    private CountDownTimer countDownTimer;
+    private boolean timerHasStarted = false;
+    private final long startTime = 5 * 1000;
+    private final long interval = 1 * 1000;
+    private TextView currentX, currentY, currentZ;
 
 
 
@@ -47,14 +58,110 @@ public class MainActivity extends AppCompatActivity implements
 
         mLatitudeText = (TextView) findViewById((R.id.latitude_text));
         mLongitudeText = (TextView) findViewById((R.id.longitude_text));
-        requestUpdatesButton =(Button) findViewById((R.id.Request));
-        removeUpdatesButton=(Button) findViewById((R.id.Remove));
+
+
+
+        currentX=(TextView) findViewById(R.id.XAcc);
+        currentY=(TextView) findViewById(R.id.YAcc);
+        currentZ=(TextView) findViewById(R.id.ZAcc);
         buildGoogleApiClient();
+        sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
+        lastUpdate = System.currentTimeMillis();
+
         /*mGoogleApiClient = new GoogleApiClient.Builder(this)
                 .addConnectionCallbacks(this)
                 .addOnConnectionFailedListener(this)
                 .addApi(LocationServices.API)
                 .build();*/
+
+        countDownTimer = new MyCountDownTimer(startTime, interval);
+
+        //waiting for 5 sec to get the locations updates then disconnects the client.
+        countDownTimer.start();
+        /*if (!timerHasStarted) {
+            countDownTimer.start();
+            timerHasStarted = true;
+        } else {
+            countDownTimer.cancel();
+            timerHasStarted = false;
+        }*/
+
+
+    }
+
+    @Override
+    public void onSensorChanged(SensorEvent event) {
+        if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
+            getAccelerometer(event);
+        }
+    }
+
+    private void getAccelerometer(SensorEvent event) {
+        float[] values = event.values;
+        // Movement
+        float x = values[0];
+        float y = values[1];
+        float z = values[2];
+
+        float accelerationSquareRoot = (x * x + y * y + z * z)
+                / (SensorManager.GRAVITY_EARTH * SensorManager.GRAVITY_EARTH);
+        long actualTime = event.timestamp;
+        if (accelerationSquareRoot >= accelerationThreshold) //value is =4
+        {
+            if (actualTime - lastUpdate < 200) {
+                return;
+            }
+            currentX.setText(Float.toString(x));
+            currentY.setText(Float.toString(y));
+            currentZ.setText(Float.toString(z));
+            lastUpdate = actualTime;
+            fireGoogleClinet();
+            Toast.makeText(this, "Device was shuffled, firing Google APi Client", Toast.LENGTH_SHORT).show();
+
+        }
+    }
+
+
+    @Override
+    public void onAccuracyChanged(Sensor sensor, int accuracy) {
+
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // register this class as a listener for the orientation and
+        // accelerometer sensors
+        sensorManager.registerListener(this,
+                sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER),
+                SensorManager.SENSOR_DELAY_NORMAL);
+    }
+
+    @Override
+    protected void onPause() {
+        // unregister listener
+        super.onPause();
+        sensorManager.unregisterListener(this);
+    }
+
+    public class MyCountDownTimer extends CountDownTimer { //CountDown Timer Class.
+        public MyCountDownTimer(long startTime, long interval) {
+            super(startTime, interval);
+        }
+
+        @Override
+        public void onFinish() {
+            if(mGoogleApiClient.isConnected()){
+                mGoogleApiClient.disconnect();
+                Toast.makeText(getApplicationContext(),"Google client Disconnected, 5 Sec ended", Toast.LENGTH_SHORT).show();
+                timerHasStarted = false;
+                countDownTimer.cancel();
+            }
+        }
+
+        @Override
+        public void onTick(long millisUntilFinished) {
+        }
     }
 
     protected synchronized void buildGoogleApiClient() {
@@ -80,28 +187,34 @@ public class MainActivity extends AppCompatActivity implements
 
     }
 
-    public void requestActivityUpdatesButtonHandler(View view){
-        if(!mGoogleApiClient.isConnected()){
+    public void fireGoogleClinet(){
+        if(!mGoogleApiClient.isConnected()) {
             mGoogleApiClient.connect();
             Toast.makeText(getApplicationContext(),"Google client is now connected", Toast.LENGTH_SHORT).show();
+            countDownTimer.start();
+            /*if (!timerHasStarted) { //waiting for 5 sec to get the locations updates then disconnects the client.
+                countDownTimer.start();
+                timerHasStarted = true;
+            } else {
+                countDownTimer.cancel();
+                timerHasStarted = false;
+            }*/
         }
         else{
             Toast.makeText(getApplicationContext(),"Google client is already Connected", Toast.LENGTH_SHORT).show();
+            countDownTimer.start();
+            /*if (!timerHasStarted) { //waiting for 5 sec to get the locations updates then disconnects the client.
+                countDownTimer.start();
+                timerHasStarted = true;
+            } else {
+                countDownTimer.cancel();
+                timerHasStarted = false;
+            }*/
         }
 
     }
 
-    public void removeActivityUpdatesButtonHandler(View view){
-        if(mGoogleApiClient.isConnected()){
-            mGoogleApiClient.disconnect();
-            Toast.makeText(getApplicationContext(),"Google client Disconnected", Toast.LENGTH_SHORT).show();
-            //LocationServices.FusedLocationApi.removeLocationUpdates(mGoogleApiClient, this);
-        }
-        else{
-            Toast.makeText(getApplicationContext(),"Google client is already Disconnected", Toast.LENGTH_SHORT).show();
-        }
 
-    }
 
     /**
      * Runs when a GoogleApiClient object successfully connects.
@@ -112,7 +225,7 @@ public class MainActivity extends AppCompatActivity implements
         mLocationRequest = LocationRequest.create();
         mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
         mLocationRequest.setInterval(10000);//Update location every 10 second.
-        mLocationRequest.setFastestInterval(1000);
+        mLocationRequest.setFastestInterval(5000);
 
         /*Since SDK 23, you should/need to check the permission before you call Location API functionality. Here is an example of how to do it:*/
 
@@ -171,4 +284,6 @@ public class MainActivity extends AppCompatActivity implements
         Toast.makeText(getApplicationContext(), "GoogleApiClient connection has failed", Toast.LENGTH_SHORT).show();//not able to connect this time only.
         Log.i(TAG, "Connection failed: ConnectionResult.getErrorCode() = " + connectionResult.getErrorCode());
     }
+
+
 }

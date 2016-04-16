@@ -13,53 +13,70 @@
     tools:showIn="@layout/activity_main"
     android:weightSum="1">
 
+
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="70dp"
-        android:orientation="horizontal">
-    <Button
-        android:layout_width="170dp"
-        android:layout_height="match_parent"
-        android:text="Remove_Updates"
-        android:id="@+id/Request"
-        android:onClick="removeActivityUpdatesButtonHandler">
-        </Button>
-    <Button
-            android:layout_width="170dp"
-            android:layout_height="match_parent"
-            android:text="Request_Updates"
-            android:id="@+id/Remove"
-        android:onClick="requestActivityUpdatesButtonHandler"/>
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="true"
+        android:layout_alignParentStart="true"
+        android:id="@+id/loc">
 
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:text="Longitude:"
+            android:textSize="20dp"
+            android:layout_gravity="right"
+            android:layout_weight="1.54"
+            android:id="@+id/longitude_text"
+            android:layout_alignParentStart="true"
+            android:layout_alignParentBottom="true"
+            android:layout_alignEnd="@+id/longitude_text" />
+
+        <TextView
+            android:layout_width="183dp"
+            android:layout_height="96dp"
+            android:id="@+id/latitude_text"
+            android:text="Latitude"
+            android:textSize="20dp"
+            android:layout_alignParentStart="true" />
     </LinearLayout>
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_centerVertical="true"
-        android:layout_alignParentStart="true">
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="match_parent"
-        android:text="Longitude:"
-        android:textSize="20dp"
-        android:layout_gravity="right"
-        android:layout_weight="1.54"
-        android:id="@+id/longitude_text"
         android:layout_alignParentStart="true"
-        android:layout_alignParentBottom="true"
-        android:layout_alignEnd="@+id/longitude_text" />
+        android:layout_above="@+id/loc">
 
-    <TextView
-        android:layout_width="183dp"
-        android:layout_height="200dp"
-        android:id="@+id/latitude_text"
-        android:text="Latitude"
-        android:textSize="20dp"
-        android:layout_alignEnd="@+id/l1"
-        android:layout_alignParentStart="true"
-        android:layout_below="@+id/l1" />
+        <TextView
+            android:layout_width="120dp"
+            android:layout_height="96dp"
+            android:text="X acceleration"
+            android:textSize="20dp"
+            android:layout_gravity="right"
+            android:layout_weight="1.54"
+            android:id="@+id/XAcc"
+            android:layout_alignParentStart="true"
+            android:layout_alignParentBottom="true"
+            />
+
+        <TextView
+            android:layout_width="120dp"
+            android:layout_height="96dp"
+            android:id="@+id/YAcc"
+            android:text="Y acceleration"
+            android:textSize="20dp"
+            android:layout_alignParentStart="true"
+             />
+
+        <TextView
+            android:layout_width="120dp"
+            android:layout_height="96dp"
+            android:id="@+id/ZAcc"
+            android:text="Z acceleration"
+            android:textSize="20dp"
+            android:layout_alignParentStart="true" />
     </LinearLayout>
 
 </RelativeLayout>
